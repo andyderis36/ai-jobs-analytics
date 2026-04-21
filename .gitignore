@@ -8,3 +8,7 @@ ai_jobs_global_2026_cleaned.csv
 ngrams_top20.png
 salary_min_by_experience_boxplot.png
 wordcloud_clean_description.png
+guideline.md
+check_salary_missing.py
+(copy)load_clean_ai_jobs_2026 copy.ipynb
+test_preprocess.py
