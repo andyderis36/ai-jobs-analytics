@@ -18,7 +18,7 @@ This repository contains a reproducible Python-based analysis of 5,773 AI/ML job
 - NLP / Lemmatization: `nltk` (tokenization, stopwords, WordNet lemmatizer)
 - Vectorization & modeling: `scikit-learn` (`TfidfVectorizer`)
 - Visualization: `matplotlib`, `seaborn`, `wordcloud`
-- Execution: Jupyter Notebook (`load_clean_ai_jobs_2026.ipynb`)
+- Execution: Jupyter Notebook (`descriptive_text_analytics.ipynb`)
 
 ## Key Features & Pipeline
 
@@ -72,7 +72,7 @@ pip install -r requirements.txt
 # Run interactively
 jupyter lab
 # or run end-to-end (recreates outputs)
-jupyter nbconvert --to notebook --execute load_clean_ai_jobs_2026.ipynb --ExecutePreprocessor.timeout=600
+jupyter nbconvert --to notebook --execute descriptive_text_analytics.ipynb --ExecutePreprocessor.timeout=600
 ```
 
 Notes:
@@ -80,7 +80,7 @@ Notes:
 
 ## Repository Structure
 
-- [load_clean_ai_jobs_2026.ipynb](load_clean_ai_jobs_2026.ipynb) — primary analysis notebook (Load → Clean → TF‑IDF → Analysis → Visuals)
+- [descriptive_text_analytics.ipynb](descriptive_text_analytics.ipynb) — primary analysis notebook (Load → Clean → TF‑IDF → Analysis → Visuals)
 - [output/ai_jobs_global_2026_cleaned.csv](output/ai_jobs_global_2026_cleaned.csv) — cleaned dataset
 - `output/` — generated figures and charts (see placeholders above)
 - [requirements.txt](requirements.txt) — pinned dependencies for reproducibility
@@ -114,6 +114,6 @@ Mapping Technical Skills in AI/ML Job Markets — descriptive text analytics of 
 
 If you want, I can next:
 - add an MIT `LICENSE` file,
-- strip outputs and clear metadata from `load_clean_ai_jobs_2026.ipynb` before commit, or
+- strip outputs and clear metadata from `descriptive_text_analytics.ipynb` before commit, or
 - create a short GitHub project description and topics/slug for publishing.
 
