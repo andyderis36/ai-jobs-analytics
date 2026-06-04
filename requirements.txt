@@ -7,7 +7,6 @@ async-lru==2.3.0
 attrs==26.1.0
 babel==2.18.0
 beautifulsoup4==4.14.3
-bleach==6.3.0
 certifi==2026.2.25
 cffi==2.0.0
 charset-normalizer==3.4.7
@@ -100,7 +99,6 @@ soupsieve==2.8.3
 stack-data==0.6.3
 terminado==0.18.1
 threadpoolctl==3.6.0
-tinycss2==1.5.1
 tornado==6.5.5
 tqdm==4.67.3
 traitlets==5.14.3
@@ -114,3 +112,7 @@ webencodings==0.5.1
 websocket-client==1.9.0
 widgetsnbextension==4.0.15
 wordcloud==1.9.6
+tcmlib==1.5.0
+tbb==2023.0.0
+daal==2026.0.0
+scikit-learn-intelex==2026.0.0
