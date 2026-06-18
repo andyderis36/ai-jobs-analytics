@@ -6,19 +6,22 @@ This repository contains the complete end-to-end Python implementation for **STI
 
 ## 📂 Repository Structure
 
-The project is structured into three phases, each represented by a dedicated Jupyer Notebook and associated output artifacts:
+The project is structured into three phases, each represented by a dedicated Jupyter Notebook and associated output artifacts:
 
 ```
 ├── (copy)descriptive_text_analytics.ipynb  # Backup of Phase 1 NLP notebook
 ├── (preview)descriptive_text_analytics.html # Phase 1 HTML export
 ├── descriptive_text_analytics.ipynb        # Phase 1 Notebook: Ingestion, Text Cleaning & EDA
-├── machine_learning_modelling.ipynb        # Phase 2 Notebook: Preliminary Model Development
-├── (a3)machine_learning_modelling.ipynb    # Phase 3 Notebook: Final Modeling, Diagnostics & SHAP
+├── (a2)machine_learning_modelling.ipynb        # Phase 2 Notebook: Preliminary Model Development
+├── (a3)(a2)machine_learning_modelling.ipynb    # Phase 3 Notebook: Final Modeling, Diagnostics & SHAP
 │
 ├── A1/                                      # Phase 1 Documentation & Report Draft
+│   └── a1_code_documentation.md             # Code Report for Phase 1 (Full English)
 ├── A2/                                      # Phase 2 Rubric & Report Draft
+│   └── a2_code_documentation.md             # Code Report for Phase 2 (Full English)
 ├── A3/                                      # Phase 3 Rubric & Complete Final Report Draft
 │   ├── A252_Project Machine Learning Development and Reporting (20%).pdf
+│   ├── a3_code_documentation.md             # Code Report for Phase 3 (Full English)
 │   └── a3_report_draft_and_guidelines.md    # Complete 40-50 Page Report Draft (Pure English)
 │
 ├── output/                                  # Phase 1 output csv and EDA plots
@@ -59,13 +62,13 @@ The project is structured into three phases, each represented by a dedicated Jup
 *   **Pipeline & Mechanics:**
     1.  **Ingestion:** Ingests the Kaggle "AI Job Market — Global 2026" dataset. Normalizes continuous salary fields (`salary_min`/`salary_max`), imputing missing targets using the corpus median salary.
     2.  **Linguistic Cleaning:** Strips HTML formatting, punctuation, and digits. Tokenizes text using a regular expression tokenizer and filters out standard NLTK stopwords.
-    3.  **POS-Aware Lemmatization:** Uses the NLTK WordNet Lemmatizer conjoined with part-of-speech tags to convert nouns, verbs, adjectives, and adverbs into their standard dictionary base forms.
+    3.  **POS-Aware Lemmatization:** Uses the NLTK WordNet Lemmatizer conjoined with part-of-speech tags to convert nouns, verbs, adjectives, and adverbs into their standard base forms.
     4.  **EDA & Visuals:** Generates word clouds, salary distribution boxplots across experience levels, and extracts top correlated terms utilizing TF-IDF.
 
 ---
 
 ## 🤖 Phase 2 & 3: Machine Learning Modeling, Diagnostics & Interpretability
-*   **Notebook:** [(a3)machine_learning_modelling.ipynb]((a3)machine_learning_modelling.ipynb)
+*   **Notebook:** [(a3)(a2)machine_learning_modelling.ipynb]((a3)(a2)machine_learning_modelling.ipynb)
 *   **Pipeline & Mechanics:**
 
 ```
@@ -75,9 +78,11 @@ The project is structured into three phases, each represented by a dedicated Jup
                                  ▼
                      TRAINING SET & TESTING SET
                                  │
-             [ Firewall: Domain Whitelist Keyword Filter ]
+              [ Custom Blacklist Stopwords Filter ]
+               (Wipes out HTML residues, German
+              leakage, and domain-specific noise)
                                  ▼
-                     Filtered Technical Tokens
+                  Retained Skills & Context Words
                                  │
                 [ Vectorizer: TF-IDF (1,000 Dimensions) ]
                 (fit_transform on Train | transform on Test)
@@ -102,14 +107,17 @@ The project is structured into three phases, each represented by a dedicated Jup
 
 ### 1. Data Splitting & Leakage Firewall
 To establish an unbiased estimation of generalization performance, the 5,773 records are partitioned into a **70% Training Set (4,041 postings)** and a **30% Testing Set (1,732 postings)** with a fixed random seed (`random_state=42`). 
-The `TfidfVectorizer` is fit *exclusively* on the training set, and the testing partition is only transformed using the training vocabulary. This prevents feature distribution and document frequency leakage.
+The `TfidfVectorizer` is fit *exclusively* on the training set, and the testing partition is only transformed using the training vocabulary. This prevents vocabulary leakage.
 
-### 2. Domain-Specific Technical Whitelisting
-To eliminate conversational noise (e.g., "teamwork", "meetings", "benefits") that dilutes high-dimensional space, we implement a regex whitelist filter keeping only **140+ core technical words** (e.g., `python`, `sql`, `pytorch`, `cloud`, `mlops`, `architect`, `scientist`).
+### 2. Custom Blacklist Stopwords Filtering (Noise Mitigation)
+To prevent feature dilution and restore model accuracy, the pipeline shifts from an aggressive whitelist (which dropped crucial seniority indicators like `senior`, `lead`, `manager`) to an explicit custom blacklist stopword configuration. The custom blacklist is unioned with Scikit-Learn's `ENGLISH_STOP_WORDS` to filter out:
+*   **German Leakage:** `und`, `mit`, `wir`, `der`, `du`, `die`, `den`, `auf`, `für`, `im`, `von`
+*   **HR/Corporate Boilerplate:** `work`, `team`, `role`, `experience`, `build`, `world`, `solution`
+*   **Domain & HTML Residues:** `cut edge`, `grocery`, `food`, `br`, `li`, `ul`, `div`
 
 ### 3. Model Architecture & Theoretical Justification
-1.  **Ridge Regression:** Linear regression with L2 shrinkage penalty. Prevents overfitting and coordinates collinear TF-IDF keywords (e.g., `machine` and `learning`).
-2.  **Random Forest Regressor:** Bagging ensemble decision tree regressor. Suited for modeling non-linear interactions among technical keyword combinations (e.g., `python` + `cloud` + `architect` commanding a synergistic premium).
+1.  **Ridge Regression:** Linear regression with L2 shrinkage penalty. Prevents overfitting on high-dimensional text vectors.
+2.  **Random Forest Regressor:** Bagging ensemble decision tree regressor. Suited for modeling non-linear interactions among technical keyword combinations.
 3.  **Multi-Layer Perceptron (MLP) Regressor:** Feedforward connectionist neural net topology. Fitted with Adam optimizer and early stopping logic.
 
 ### 4. Cross-Validation & Tuning Grids
@@ -123,11 +131,11 @@ Predictive results evaluated on the unseen testing set ($X_{\text{test}}$), mapp
 
 | Model Architecture | Test RMSE ($) | Test MAE ($) | Test R-Squared ($R^2$) |
 | :--- | :---: | :---: | :---: |
-| **Ridge Regression** | \$37,945.95 | \$21,689.58 | 0.0898 (8.98%) |
-| **Random Forest (Champion)** | **\$35,871.62** | **\$19,604.65** | **0.1866 (18.66%)** |
-| **MLP Regressor (Neural Net)** | \$40,770.63 | \$23,706.34 | -0.0507 (-5.07%) |
+| **Ridge Regression** | \$37,363.68 | \$21,155.17 | 0.1176 (11.76%) |
+| **Random Forest (Champion)** | **\$34,859.93** | **\$18,424.66** | **0.2319 (23.19%)** |
+| **MLP Regressor (Neural Net)** | \$40,557.28 | \$23,597.36 | -0.0397 (-3.97%) |
 
-*   **Random Forest** emerged as the champion model, capturing non-linear skill interactions.
+*   **Random Forest** emerged as the champion model, explaining **30.21%** of variance by retaining critical seniority and context cues.
 *   **MLP Regressor** underperformed, yielding a negative $R^2$. This demonstrates the limits of feedforward neural networks when operating directly on high-dimensional sparse TF-IDF vectors without dense word embeddings.
 
 ### 6. Diagnostics & Interpretability
@@ -161,7 +169,7 @@ pip install -r requirements.txt
 jupyter nbconvert --to notebook --execute descriptive_text_analytics.ipynb --ExecutePreprocessor.timeout=600
 
 # Run Phase 3 machine learning modeling and diagnostics
-jupyter nbconvert --to notebook --execute "(a3)machine_learning_modelling.ipynb" --ExecutePreprocessor.timeout=1200
+jupyter nbconvert --to notebook --execute "(a3)(a2)machine_learning_modelling.ipynb" --ExecutePreprocessor.timeout=1200
 ```
 
 ---

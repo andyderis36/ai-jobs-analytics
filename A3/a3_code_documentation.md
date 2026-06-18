@@ -1,77 +1,69 @@
 # Code Documentation: Advanced Modeling, Diagnostics, and SHAP Interpretability
-**Notebook File:** [(a3)machine_learning_modelling.ipynb](file:///C:/Users/andyd/Documents/UUM/UUM%20OL/A252/ML/Assignment/(a3)machine_learning_modelling.ipynb)  
+**Notebook File:** [(a3)(a2)machine_learning_modelling.ipynb](file:///C:/Users/andyd/Documents/UUM/UUM%20OL/A252/ML/Assignment/(a3)(a2)machine_learning_modelling.ipynb)  
 **Phase:** Assignment 3 (Final Modeling & Interpretability)  
 **Language:** Python 3  
 
 ---
 
-## 1. Domain-Specific Technical Filter
+## 1. Custom Blacklist Stopword Filtering
 
-This notebook introduces a regex-based whitelist filter to clean the text corpus prior to vectorization, isolating technical skills and terminology.
+This notebook introduces a comprehensive blacklist stopword configuration to remove German language leakage, generic HR fillers, and domain-specific noise while retaining key markers of seniority and business context.
 
 ```python
-import re
 from sklearn.model_selection import train_test_split
+import numpy as np
 
-# Split data first
+# 1. Split data first
 X_train, X_test, y_train, y_test = train_test_split(
     df['clean_description'], df['salary_min'], test_size=0.30, random_state=42
 )
 
-# 140+ core technical keywords whitelist
-strict_tech_keywords = {
-    'ai', 'ml', 'data', 'engineer', 'engineering', 'software', 'technology', 'model', 
-    'analytics', 'python', 'architecture', 'cloud', 'developer', 'development', 
-    'system', 'solution', 'science', 'infrastructure', 'design', 'platform', 
-    'algorithm', 'intelligence', 'artificial', 'deep', 'learning', 'machine',
-    'aws', 'azure', 'sql', 'api', 'vision', 'nlp', 'language', 'llm', 'llms',
-    'generative', 'genai', 'prompt', 'rag', 'agent', 'agentic', 'robotics',
-    'automation', 'pipeline', 'deployment', 'mlops', 'framework', 'devops',
-    'backend', 'frontend', 'fullstack', 'database', 'warehouse', 'big',
-    'spark', 'hadoop', 'kubernetes', 'docker', 'container', 'linux', 'bash',
-    'git', 'testing', 'security', 'network', 'hardware', 'gpu', 'tpu',
-    'tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'scipy',
-    'tableau', 'powerbi', 'dashboard', 'visualization', 'reporting', 'bi',
-    'statistics', 'math', 'mathematics', 'optimization', 'predictive', 'analysis',
-    'analyst', 'scientist', 'architect', 'research', 'researcher', 'lab',
-    'java', 'c++', 'javascript', 'typescript', 'react', 'node', 'go', 'rust',
-    'ruby', 'php', 'html', 'css', 'nosql', 'mongodb', 'cassandra', 'redis',
-    'elasticsearch', 'snowflake', 'databricks', 'airflow', 'mlflow', 'kubeflow',
-    'sagemaker', 'vertex', 'huggingface', 'langchain', 'openai', 'gpt', 'bert',
-    'llama', 'claude', 'anthropic', 'meta', 'google', 'microsoft', 'amazon',
-    'scale', 'scalable', 'production', 'training', 'inference', 'finetuning',
-    'dataset', 'datasets', 'annotation', 'labeling', 'computer', 'cognitive',
-    'neural', 'networks', 'transformer', 'transformers', 'diffusion', 'audio',
-    'video', 'image', 'speech', 'text', 'processing', 'mining', 'scraping',
-    'web', 'app', 'application', 'mobile', 'ios', 'android', 'ui', 'ux',
-    'agile', 'scrum', 'jira', 'github', 'gitlab', 'terraform', 'gcp',
-    'microservices', 'metrics', 'query', 'mysql', 'postgresql', 'oracle',
-    'server', 'serverless', 'technical', 'technologies', 'code', 'coding',
-    'programming', 'programmer', 'scripting', 'script', 'maths', 'statistical',
-    'modeling', 'models', 'algorithms', 'quantitative', 'quant', 'cv', 'dl',
-    'integration', 'continuous', 'delivery', 'cicd', 'unix', 'ubuntu',
-    'debian', 'centos', 'redhat', 'windows', 'macos', 'jupyter', 'notebook',
-    'colab', 'kaggle'
-}
+# Target log transformation
+y_train_log = np.log1p(y_train)
 
-def domain_specific_filter(text):
-    """Retain only tokens present in the technical whitelist"""
-    text = str(text).lower()
-    # Extract words/tokens
-    tokens = re.findall(r'\b[a-z+-]+\b', text)
-    filtered_tokens = [t for t in tokens if t in strict_tech_keywords]
-    return " ".join(filtered_tokens)
+# 2. Comprehensive custom blacklist definition
+custom_blacklist = [
+    # German Leakage
+    'und', 'mit', 'wir', 'der', 'du', 'die', 'den', 'auf', 'für', 'im', 'von',
+    # HR/Corporate Fillers
+    'work', 'team', 'role', 'experience', 'build', 'world', 'solution', 'job', 'company', 'customer', 'join', 'opportunity', 'description', 'position', 'mission', 'people', 'year', 'time', 'look', 'support', 'client', 'real', 'requirement', 'grow', 'global', 'love', 'apply', 'life', 'problem', 'delivery', 'qualification', 'organization', 'skill', 'quality', 'environment', 'professional', 'partner', 'day', 'care', 'candidate', 'health', 'believe', 'ability', 'serve', 'share', 'highly', 'end', 'enable', 'operation', 'employee', 'improve', 'meet', 'shape', 'require', 'offer', 'user', 'process', 'responsibility', 'decision', 'information', 'group', 'connect', 'management', 'bring', 'responsible', 'access', 'enjoy', 'fast', 'hour', 'office', 'ensure', 'million', 'strong', 'culture', 'collaborate', 'standard', 'member', 'value', 'salary', 'range', 'include', 'deliver', 'seek',
+    # Domain Noise & HTML Leftovers
+    'cut edge', 'cut', 'edge', 'grocery', 'food', 'job description', 'grade', 'br', 'li', 'ul', 'div', 'span', 'href', 'html', 'amp'
+]
 
-# Apply filter
-X_train_filtered = X_train.apply(domain_specific_filter)
-X_test_filtered = X_test.apply(domain_specific_filter)
+# 3. Stop-words Unioning
+from sklearn.feature_extraction import text
+final_stop_words = list(text.ENGLISH_STOP_WORDS.union(custom_blacklist))
 ```
-
-*   **Logic:** Non-technical words, punctuation, and digits are removed. This restricts the vectorizer's vocabulary to technical terms, reducing dimensionality and noise.
 
 ---
 
-## 2. Multi-Model Residual Diagnostics
+## 2. TF-IDF Feature Engineering
+
+Converts text inputs into numerical TF-IDF feature matrices using the combined custom stopwords.
+
+```python
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+# Re-initialize the TfidfVectorizer
+vectorizer = TfidfVectorizer(
+    ngram_range=(1, 2),
+    min_df=10,
+    max_df=0.80,
+    max_features=1000,
+    stop_words=final_stop_words
+)
+
+# fit_transform on X_train, transform on X_test
+X_train_tfidf = vectorizer.fit_transform(X_train)
+X_test_tfidf = vectorizer.transform(X_test)
+
+feature_names = vectorizer.get_feature_names_out()
+```
+
+---
+
+## 3. Multi-Model Residual Diagnostics
 
 Calculates prediction residuals to check for homoscedasticity and target bias.
 
@@ -99,11 +91,11 @@ plt.tight_layout()
 plt.savefig('output_modelling/residual_plots.png', dpi=300)
 ```
 
-*   **Interpretation:** The diagnostic plot checks that residuals are randomly distributed around $y=0$. The diagonal boundary pattern indicates the models tend to underpredict extreme high-salary outliers ($> \$200,000$).
+*   **Interpretation:** Checks that residuals are randomly distributed around $y=0$. The diagonal boundary pattern indicates the models struggle to predict extreme high-salary outliers ($> \$200,000$).
 
 ---
 
-## 3. Learning Curves (Generalization Diagnostics)
+## 4. Learning Curves (Generalization Diagnostics)
 
 Evaluates the fitting behavior of the champion Random Forest model across training sample sizes.
 
@@ -141,11 +133,9 @@ plt.grid(True, linestyle='--')
 plt.savefig('output_modelling/learning_curve_rf.png', dpi=300)
 ```
 
-*   **Logic:** Plots train and cross-validation RMSE as a function of the number of training samples, helping diagnose whether the model is underfitting or overfitting.
-
 ---
 
-## 4. Gini Feature Importances
+## 5. Gini Feature Importances
 
 Extracts the relative contribution of each technical term to prediction error reduction.
 
@@ -166,7 +156,7 @@ plt.savefig('output_modelling/rf_feature_importances.png', dpi=300)
 
 ---
 
-## 5. SHAP Interpretability & Surrogate Proxy Model
+## 6. SHAP Interpretability & Surrogate Proxy Model
 
 SHAP TreeExplainer computes additive local feature contributions. However, computing SHAP values on deep decision trees (`max_depth=None`) with sparse TF-IDF vectors can cause floating-point accumulation overflows in SHAP's C++ backend, triggering additivity assertion errors.
 
@@ -214,8 +204,3 @@ plt.title("SHAP Summary Plot: Feature Impact on Salary", fontweight='bold', pad=
 plt.tight_layout()
 plt.savefig('output_modelling/shap_summary_plot.png', dpi=300)
 ```
-
-*   **Proxy Logic:**
-    1.  `unpatch_sklearn()` removes the Intel runtime hooks.
-    2.  `max_depth` is constrained to `15` to limit tree depth.
-    3.  This surrogate model captures the global decision boundaries of the champion model while keeping paths shallow enough for SHAP's C++ backend to execute without floating-point overflow.

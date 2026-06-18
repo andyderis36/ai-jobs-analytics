@@ -1,5 +1,5 @@
 # Code Documentation: Machine Learning Model Development & Tuning
-**Notebook File:** [machine_learning_modelling.ipynb](file:///C:/Users/andyd/Documents/UUM/UUM%20OL/A252/ML/Assignment/machine_learning_modelling.ipynb)  
+**Notebook File:** [(a2)machine_learning_modelling.ipynb](file:///C:/Users/andyd/Documents/UUM/UUM%20OL/A252/ML/Assignment/(a2)machine_learning_modelling.ipynb)  
 **Phase:** Assignment 2 (Model Development)  
 **Language:** Python 3  
 
@@ -28,9 +28,9 @@ print("Is RandomForest accelerated?", sklearn_is_patched('RandomForestRegressor'
 
 ---
 
-## 2. Ingestion & Pre-modeling Data Splits
+## 2. Ingestion, Pre-modeling Splits, & Blacklist Setup
 
-The cleaned text output from Phase 1 is loaded. A strict data partition firewall is implemented.
+The cleaned text output from Phase 1 is loaded. A strict data partition firewall is implemented, and the comprehensive custom blacklist stopwords are defined to filter out German language leakage, corporate filler, and domain noise.
 
 ```python
 import os
@@ -54,10 +54,25 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 # Apply log transformation to the target
 y_train_log = np.log1p(y_train)
+
+# Comprehensive custom blacklist
+custom_blacklist = [
+    # German Leakage
+    'und', 'mit', 'wir', 'der', 'du', 'die', 'den', 'auf', 'für', 'im', 'von',
+    # HR/Corporate Fillers
+    'work', 'team', 'role', 'experience', 'build', 'world', 'solution', 'job', 'company', 'customer', 'join', 'opportunity', 'description', 'position', 'mission', 'people', 'year', 'time', 'look', 'support', 'client', 'real', 'requirement', 'grow', 'global', 'love', 'apply', 'life', 'problem', 'delivery', 'qualification', 'organization', 'skill', 'quality', 'environment', 'professional', 'partner', 'day', 'care', 'candidate', 'health', 'believe', 'ability', 'serve', 'share', 'highly', 'end', 'enable', 'operation', 'employee', 'improve', 'meet', 'shape', 'require', 'offer', 'user', 'process', 'responsibility', 'decision', 'information', 'group', 'connect', 'management', 'bring', 'responsible', 'access', 'enjoy', 'fast', 'hour', 'office', 'ensure', 'million', 'strong', 'culture', 'collaborate', 'standard', 'member', 'value', 'salary', 'range', 'include', 'deliver', 'seek',
+    # Domain Noise & HTML Leftovers
+    'cut edge', 'cut', 'edge', 'grocery', 'food', 'job description', 'grade', 'br', 'li', 'ul', 'div', 'span', 'href', 'html', 'amp'
+]
+
+# Stop-words Unioning
+from sklearn.feature_extraction import text
+final_stop_words = list(text.ENGLISH_STOP_WORDS.union(custom_blacklist))
 ```
 
 *   **`random_state=42`:** Pinning the PRNG seed ensures identical data splits across executions, making evaluations reproducible.
 *   **Log Transformation (`np.log1p`):** Calculates $y_{\text{log}} = \ln(1 + y)$. This normalizes the skewed salary target, helping the algorithms converge.
+*   **Custom Blacklist:** Combines 90+ empirical noise words with standard English stop words while retaining critical indicators of seniority (`senior`, `lead`, `manager`) and business context.
 
 ---
 
@@ -71,9 +86,10 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 # Vectorize unigrams & bigrams
 vectorizer = TfidfVectorizer(
     ngram_range=(1, 2),
-    min_df=5,
-    max_df=0.85,
-    max_features=1000
+    min_df=10,
+    max_df=0.80,
+    max_features=1000,
+    stop_words=final_stop_words
 )
 
 # Fit on training data ONLY; transform both sets
@@ -83,7 +99,8 @@ X_test_tfidf = vectorizer.transform(X_test)
 feature_names = vectorizer.get_feature_names_out()
 ```
 
-*   **Anti-Leakage Firewall:** `fit_transform` is called exclusively on `X_train`. The testing set `X_test` is only processed using `transform` to apply the learned vocabulary and document frequencies. This ensures terms from the test set do not influence the IDF calculations.
+*   **Anti-Leakage Firewall:** `fit_transform` is called exclusively on `X_train`. The testing set `X_test` is only processed using `transform` to apply the learned vocabulary and document frequencies.
+*   **Parameters:** `min_df=10` removes very rare noisy features, and `max_df=0.80` drops words appearing in more than 80% of job descriptions.
 
 ---
 
