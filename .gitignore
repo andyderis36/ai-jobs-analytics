@@ -1,6 +1,8 @@
 /.venv/
-A1
-A2
+# A1
+# A2
+# A3
+A1/paper
 (copy)descriptive_text_analytics.ipynb
 asgmt-2_report_draft_guidelines.md
 asgmt-2_report_draft_guidelines.pdf
@@ -10,3 +12,7 @@ nbconvert_out.log
 (preview)descriptive_text_analytics.html
 nbconvert_out.log
 a2_code
+machine_learning_modelling_presentation.md
+A1/Script - A1 Presentation.pdf
+A1/ML Gp-7 Presentation.pdf
+A3/a3_report_draft_and_guidelines.md
